@@ -37,6 +37,7 @@ A version of this project has existed for several years to help a binary blend i
 
 ## Usage
 
+```
 SYNOPSIS
     Meta-Twin copies metadata from one file ane inject into another.
 
@@ -48,6 +49,8 @@ SYNTAX
     Target     Target binary that will be updated
 
     Sign       Optional setting that will add the source's digital signature   
+
+```
 
 ## Example
 
