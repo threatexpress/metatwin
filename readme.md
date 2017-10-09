@@ -23,7 +23,7 @@ This project is based on a techique I've used for a few years.  This has been up
 
  - Casey Smith (@subtee) MS Signed binary in 3 Steps - https://twitter.com/subTee/status/912769644473098240
  - Resource Hacker - http://www.angusj.com/resourcehacker/
- - SigTheif - http://www.angusj.com/resourcehacker/ (Included as a pyinstaller compiled binary)
+ - SigThief - https://github.com/secretsquirrel/SigThief  (Included as a pyinstaller compiled binary)
 
 ## Install
  
@@ -33,7 +33,7 @@ This project is based on a techique I've used for a few years.  This has been up
 
 ## Description
 
-A version of this project has been used for many years to help a binary blend in by modifying it's metadata.  A binary's metadata can be replaced with the metadata of a source.  This includes values such as Product Name, Product Version, File Version, Copyright, etc.  In addition to standard metadata, sigtheif is used to add the digital signature.  
+A version of this project has existed for several years to help a binary blend into a target environment by modifying it's metadata.  A binary's metadata can be replaced with the metadata of a source.  This includes values such as Product Name, Product Version, File Version, Copyright, etc.  In addition to standard metadata, sigthief is used to add the digital signature.  
 
 ## Usage
 
