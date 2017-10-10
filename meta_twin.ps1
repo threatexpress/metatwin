@@ -2,57 +2,43 @@ Function Meta-Twin {
     
 <#
 .SYNOPSIS  
-        Meta-Twin copies metadata from one file ane inject into another.
+    
+    Meta-Twin copies metadata and the AuthenticodeSignature from a source binary and into a target binary
+    
+    Function: Meta-Twin
+    Author: Joe Vest (@joevest), PSv2 Compatibility by Andrew Chiles (@andrewchiles)
+    License: BSD 3-Clause
+    Required Dependencies: ResourceHacker.exe
+    Optional Dependencies: None
+    
 .DESCRIPTION  
-        Meta-Twin copies metadata from one file ane inject into another.
-.LINK  
-    n/a
-                
-.NOTES  
-    Author/Copyright:     Copyright Joe Vest - All Rights Reserved
-    
-    Email/Blog/Twitter: joe@minis.io, threatexpress.com, @joevest
-    
-    Disclaimer:         THIS CODE IS MADE AVAILABLE AS IS, WITHOUT WARRANTY OF ANY KIND. THE ENTIRE RISK
-                        OF THE USE OR THE RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER.
-                        While these scripts are tested and working in my environment, it is recommended 
-                        that you test these scripts in a test environment before using in your production 
-                        environment. Tom Arbuthnot further disclaims all implied warranties including, 
-                        without limitation, any implied warranties of merchantability or of fitness for 
-                        a particular purpose. The entire risk arising out of the use or performance of 
-                        this script and documentation remains with you. In no event shall Tom Arbuthnot, 
-                        its authors, or anyone else involved in the creation, production, or delivery of 
-                        this script/tool be liable for any damages whatsoever (including, without limitation, 
-                        damages for loss of business profits, business interruption, loss of business 
-                        information, or other pecuniary loss) arising out of the use of or inability to use 
-                        the sample scripts or documentation.
-    
-     
-    Requirements:   See project README
-.EXAMPLE
-        Function-Template
- 
-        Description
-        -----------
-        Returns Objects
-.EXAMPLE
-        Function-Template -Param1
- 
-        Description
-        -----------
-        Actions Param1
-# Parameters
-.PARAMETER Param1
-        Param1 description
-.PARAMETER Param2
-        Param2 Description
+        Meta-Twin copies metadata and the AuthenticodeSignature from a source binary and into a target binary
         
+.LINK  
+    https://www.github.com/minisllc/metatwin
+    http://threatexpress.com/2017/10/metatwin-borrowing-microsoft-metadata-and-digital-signatures-to-hide-binaries/
+    
+.PARAMETER Source
+
+        Path to source binary (where you want to copy the resources from)
+        
+.PARAMETER Target
+
+        Path to target binary (where you want the resources copied to)
+        
+.PARAMETER Sign
+
+        Switch to perform AuthenticodeSignature copying via SigThief
+        
+.EXAMPLE
+    
+        C:\PS> Meta-Twin -Source C:\windows\explorer.exe -Target c:\mypayload.exe -Sign
+ 
+        Description
+        -----------
+        Copies binary resource metadata and AuthenticodeSignature from a source binary to a new copy of the target binary
 #>
 
-  #############################################################
-  # Param Block
-  #############################################################
-  
   Param     (
     [ValidateScript({Test-Path $_ })]
         [Parameter(Mandatory=$true,
@@ -67,10 +53,8 @@ Function Meta-Twin {
     [Parameter(Mandatory=$false,
         HelpMessage='Include digital signature')]
         [Switch]$Sign
-    
-    
-  ) #Close Parameters
-
+        
+  )
 
   #############################################################
   # Variables
@@ -79,8 +63,6 @@ Function Meta-Twin {
 # Logo
 
 $logo = @"
-
-
 
 
 =================================================================
@@ -97,14 +79,16 @@ Author: @joevest
 
 "@
 
-####################################
-# VARIABLES
+Set-StrictMode -Version 2
 
 # Binaries
 $resourceHackerBin = ".\src\resource_hacker\ResourceHacker.exe"
 $resourceHacker_base_script = ".\src\rh_base_script.txt"
-$mimikatzBin       = ".\src\resource_hacker\ResourceHacker.exe"
-$sigtheifBin       = ".\src\SigThief-master\dist\sigthief.exe"
+$sigthiefBin       = ".\src\SigThief-master\dist\sigthief.exe"
+
+# Perform some quick dependency checking
+If ((Test-Path $resourceHackerBin) -ne $True) {Write-Output "[!] Missing Dependency: $resourceHackerBin";break}
+If ((Test-Path $sigthiefBin) -ne $True) {Write-Output "[!] Missing Dependency: $sigthiefBin";break}
 
 $timestamp = Get-Date -f yyyyMMdd_HHmmss
 $log_file_base = (".\" + $timestamp + "\" + $timestamp)
@@ -118,119 +102,86 @@ $target_saveas_signed = (".\" + $timestamp + "\" + $timestamp + "_signed_" + $ta
 $resourcehacker_script = (".\" + $timestamp + "\" + $timestamp + "_rh_script.txt")
 
 New-Item ".\$timestamp" -type directory | out-null
-write-host $logo
-write-host "    Source:        " $source_binary_filepath
-write-host "    Target:        " $target_binary_filepath
-write-host "    Output:        " $target_saveas
-write-host "    Signed Output: " $target_saveas_signed
-write-host "---------------------------------------------- "
+Write-Output $logo
+Write-Output "Source:         $source_binary_filepath"
+Write-Output "Target:         $target_binary_filepath"
+Write-Output "Output:         $target_saveas"
+Write-Output "Signed Output:  $target_saveas_signed"
+Write-Output "---------------------------------------------- "
 
+# Clean up existing ResourceHacker.exe that may be running
 
-####################################
-# FUNCTIONS
-# Wait for Resource Hacker to finish
-
-Function WaitForResourceHacker {
-    <#
-    .SYNOPSIS  
-        Meta-Twin copies metadata from one file ane inject into another.
-    .DESCRIPTION  
-        Meta-Twin copies metadata from one file ane inject into another.
-
-    #>
-    Param     (
-        [Parameter(Mandatory=$true,
-        HelpMessage='Wait Messagey')]
-        $Message = ''
-    
-    )
-
-
-    while (get-process resourcehacker -ErrorAction SilentlyContinue) {
-        Write-Progress -Activity "$Message ..."
-        Start-Sleep .2
-        }
-    }
-
-
-####################################
-# Start
-
-# Clean up ResourceHacker.exe that may be running
-
-Stop-Process -Name ResourceHacker -ea SilentlyContinue
+Stop-Process -Name ResourceHacker -ea "SilentlyContinue"
 
 # Extract resources using Resource Hacker from source 
-$msg = " [*] Extracting resources from $source_binary_filename "
-write-host $msg
+ Write-Output "[*] Extracting resources from $source_binary_filename "
+
 $log_file = ($log_file_base + "_extract.log")
 
 $arg = "-open $source_binary_filepath -action extract -mask ,,, -save $source_resource -log $log_file"
-start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow
-WaitForResourceHacker -Message $msg
+start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
 
 # Check if extract was successful
 if (Select-String -Encoding Unicode -path $log_file -pattern "Failed") {
-    write-host " [!] Failed to extract Metadata from $source_binary_filepath"
-    write-host "     Perhaps, try a differenct source file"
-    write-host "     Exiting..."
+    Write-Output "[-] Failed to extract Metadata from $source_binary_filepath"
+    Write-Output "    Perhaps, try a differenct source file"
+    Write-Output "    Exiting..."
     return   
 }
 
-# Build Resource Hacker Script
+# Build Resource Hacker Script 
 $log_file = ($log_file_base + "_add.log")
-(Get-Content $resourceHacker_base_script).replace('AAA', $target) | Set-Content $resourcehacker_script
-(Get-Content $resourcehacker_script).replace('BBB', $target_saveas) | Set-Content $resourcehacker_script
-(Get-Content $resourcehacker_script).replace('CCC', $log_file) | Set-Content $resourcehacker_script
-(Get-Content $resourcehacker_script).replace('DDD', $source_resource) | Set-Content $resourcehacker_script
+(Get-Content $resourcehacker_base_script) -replace('AAA', $target) | Set-Content $resourcehacker_script
+(Get-Content $resourcehacker_script) -replace('BBB', $target_saveas) | Set-Content $resourcehacker_script
+(Get-Content $resourcehacker_script) -replace('CCC', $log_file) | Set-Content $resourcehacker_script
+(Get-Content $resourcehacker_script) -replace('DDD', $source_resource) | Set-Content $resourcehacker_script
 
 # Copy resources using Resource Hacker
-$msg = " [*] Copying resources from $source_binary_filename to $target_saveas"
-Write-Host $msg
-$arg = "-script $resourcehacker_script" 
-start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow 
-WaitForResourceHacker -Message $msg
+"[*] Copying resources from $source_binary_filename to $target_saveas"
 
-# Add Digital Signature using SigTheif
+$arg = "-script $resourcehacker_script"
+start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
+
+# Add Digital Signature using SigThief
 if ($Sign) {
 
     # Copy signature from source and add to target
-    $msg = " [*] Extrating and adding signature ..."
-    Write-Host $msg
+    "[*] Extrating and adding signature ..."
     $arg = "-i $source_binary_filepath -t $target_saveas -o $target_saveas_signed"
-    $a = start-process -FilePath $sigtheifBin -ArgumentList $arg -wait -NoNewWindow -PassThru
-    if ($a.ExitCode -eq -1) {
-        write-host " [!] Cannot extract signature, skipping ..."     
+    $proc = start-process -FilePath $sigthiefBin -ArgumentList $arg -Wait -PassThru
+    #$proc | Select * |Format-List
+    #$proc.ExitCode
+    if ($proc.ExitCode -ne 0) {
+        Write-Output "[-] Cannot extract signature, skipping ..."     
         $Sign = $False   
     }
-
 }
 
 # Display Results
 Start-Sleep .5
-write-host ""
-write-host " [*] Results"
-write-host " -----------------------------------------------"
+Write-Output ""
+Write-Output "[+]Results"
+Write-Output " -----------------------------------------------"
 
 
 if ($Sign) {
 
-    write-host " [*] Metadata"
+    Write-Output "[+] Metadata"
     gi $target_saveas_signed | select VersionInfo | fl
 
-    write-host " [*] Digital Signature"
+    Write-Output "[+] Digital Signature"
     Get-AuthenticodeSignature (gi $target_saveas_signed) | select SignatureType,SignerCertificate,Status | fl
+} 
 
-} else {
-    write-host " [*] Metadata"
+else {
+    Write-Output "[+] Metadata"
     gi $target_saveas | select VersionInfo | fl
 
-    write-host " [*] Digital Signature"
-    write-host "     Signature not added ... "
+    Write-Output "[+] Digital Signature"
+    Write-Output "    Signature not added ... "
 
 }
 
-
-
-
+    New-Alias -Name Invoke-MetaTwin -Value Meta-Twin
+    Export-ModuleMember -Alias * -Function *
 }

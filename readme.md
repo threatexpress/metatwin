@@ -56,6 +56,6 @@ SYNTAX
 
 ```
 c:> powershell -ep bypass
-PS Import-Module .\meta_twin.ps1
-PS Meta-Twin -Source c:\windows\system32\netcfgx.dll -Target .\beacon.exe -Sign
+PS> Import-Module .\meta_twin.ps1
+PS> Meta-Twin -Source c:\windows\system32\netcfgx.dll -Target .\beacon.exe -Sign
 ```
