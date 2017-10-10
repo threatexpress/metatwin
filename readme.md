@@ -41,10 +41,10 @@ A version of this project has existed for several years to help a binary blend i
 
 ```
 SYNOPSIS
-    MetaTwin copies metadata from one file ane inject into another.
+    Invoke-MetaTwin copies metadata from one file ane inject into another.
 
 SYNTAX
-    MetaTwin [-Source] <Object> [-Target] <Object> [-Sign] 
+    Invoke-MetaTwin [-Source] <Object> [-Target] <Object> [-Sign] 
 
     Source     Source binary containing metadata and signature
     
