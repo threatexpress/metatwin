@@ -1,4 +1,4 @@
-Function Meta-Twin {
+Function Invoke-Meta-Twin {
     
 <#
 .SYNOPSIS  
@@ -32,7 +32,7 @@ Function Meta-Twin {
         
 .EXAMPLE
     
-        C:\PS> Meta-Twin -Source C:\windows\explorer.exe -Target c:\mypayload.exe -Sign
+        C:\PS> Invoke-Meta-Twin -Source C:\windows\explorer.exe -Target c:\mypayload.exe -Sign
  
         Description
         -----------
@@ -182,6 +182,4 @@ else {
 
 }
 
-    New-Alias -Name Invoke-MetaTwin -Value Meta-Twin
-    Export-ModuleMember -Alias * -Function *
 }

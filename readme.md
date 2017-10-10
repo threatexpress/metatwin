@@ -17,7 +17,7 @@ Author: @joevest
 The project is designed as a file resource cloner.  Metadata, including digital signature, is extracted from one file and injected into another.
 Note: The signature is added, but not valid.  
 
-This project is based on a techique I've used for a few years.  This has been updated and modified to include copying digital signatures (thanks @subtee)
+This project is based on a technique I've used for a few years.  This has been updated and modified to include copying digital signatures (thanks @subtee)
 
 ## Resources
 
@@ -39,10 +39,10 @@ A version of this project has existed for several years to help a binary blend i
 
 ```
 SYNOPSIS
-    Meta-Twin copies metadata from one file ane inject into another.
+    MetaTwin copies metadata from one file ane inject into another.
 
 SYNTAX
-    Meta-Twin [-Source] <Object> [-Target] <Object> [-Sign] 
+    MetaTwin [-Source] <Object> [-Target] <Object> [-Sign] 
 
     Source     Source binary containing metadata and signature
     
@@ -56,6 +56,6 @@ SYNTAX
 
 ```
 c:> powershell -ep bypass
-PS> Import-Module .\meta_twin.ps1
-PS> Meta-Twin -Source c:\windows\system32\netcfgx.dll -Target .\beacon.exe -Sign
+PS> Import-Module .\metatwin.ps1
+PS> Invoke-MetaTwin -Source c:\windows\system32\netcfgx.dll -Target .\beacon.exe -Sign
 ```
