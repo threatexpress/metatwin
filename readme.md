@@ -24,6 +24,8 @@ This project is based on a technique I've used for a few years.  This has been u
  - Casey Smith (@subtee) MS Signed binary in 3 Steps - https://twitter.com/subTee/status/912769644473098240
  - Resource Hacker - http://www.angusj.com/resourcehacker/
  - SigThief - https://github.com/secretsquirrel/SigThief  (Included as a pyinstaller compiled binary)
+ - 
+Note: SigThief and Resource Hacker may not detect valid metadata or digital signature.  This project may switch to a different tool set, but for now, be aware of potential limitations.
 
 ## Install
  

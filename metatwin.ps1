@@ -13,6 +13,7 @@ Function Invoke-Meta-Twin {
     
 .DESCRIPTION  
         Meta-Twin copies metadata and the AuthenticodeSignature from a source binary and into a target binary
+        Note: SigThief and Resource Hacker may not detect valid metadata or digital signature.  This project may switch to a different tool set, but for now, be aware of potential limitations.
         
 .LINK  
     https://www.github.com/minisllc/metatwin
