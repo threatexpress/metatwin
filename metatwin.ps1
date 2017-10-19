@@ -1,4 +1,4 @@
-Function Invoke-Meta-Twin {
+Function Invoke-MetaTwin {
     
 <#
 .SYNOPSIS  
@@ -33,7 +33,7 @@ Function Invoke-Meta-Twin {
         
 .EXAMPLE
     
-        C:\PS> Invoke-Meta-Twin -Source C:\windows\explorer.exe -Target c:\mypayload.exe -Sign
+        C:\PS> Invoke-MetaTwin -Source C:\windows\explorer.exe -Target c:\mypayload.exe -Sign
  
         Description
         -----------
@@ -65,7 +65,6 @@ Function Invoke-Meta-Twin {
 
 $logo = @"
 
-
 =================================================================
  ___ ___    ___ ______   ____      ______  __    __  ____  ____  
 |   |   |  /  _]      | /    |    |      ||  |__|  ||    ||    \ 
@@ -82,14 +81,34 @@ Author: @joevest
 
 Set-StrictMode -Version 2
 
+# Basic file timestomping, maybe redundant since it will also need to be performed on target
+Function Invoke-TimeStomp ($source, $dest) {
+    $source_attributes = Get-Item $source
+    $dest_attributes = Get-Item $dest 
+    $dest_attributes.CreationTime = $source_attributes.CreationTime
+    $dest_attributes.LastAccessTime = $source_attributes.LastAccessTime
+    $dest_attributes.LastWriteTime = $source_attributes.LastWriteTime
+}
+
 # Binaries
 $resourceHackerBin = ".\src\resource_hacker\ResourceHacker.exe"
 $resourceHacker_base_script = ".\src\rh_base_script.txt"
 $sigthiefBin       = ".\src\SigThief-master\dist\sigthief.exe"
 
 # Perform some quick dependency checking
-If ((Test-Path $resourceHackerBin) -ne $True) {Write-Output "[!] Missing Dependency: $resourceHackerBin";break}
-If ((Test-Path $sigthiefBin) -ne $True) {Write-Output "[!] Missing Dependency: $sigthiefBin";break}
+If ((Test-Path $resourceHackerBin) -ne $True) 
+    {
+        Write-Output "[!] Missing Dependency: $resourceHackerBin"
+        Write-Output "[!] Ensure you're running MetaTwin from its local directory. Exiting"
+        break
+    }
+
+If ((Test-Path $sigthiefBin) -ne $True) 
+    {
+        Write-Output "[!] Missing Dependency: $sigthiefBin"
+        Write-Output "[!] Ensure you're running MetaTwin from its local directory. Exiting."
+        break
+    }
 
 $timestamp = Get-Date -f yyyyMMdd_HHmmss
 $log_file_base = (".\" + $timestamp + "\" + $timestamp)
@@ -124,10 +143,9 @@ start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
 
 # Check if extract was successful
 if (Select-String -Encoding Unicode -path $log_file -pattern "Failed") {
-    Write-Output "[-] Failed to extract Metadata from $source_binary_filepath"
-    Write-Output "    Perhaps, try a differenct source file"
-    Write-Output "    Exiting..."
-    return   
+    Write-Output "[!] Failed to extract Metadata from $source_binary_filepath"
+    Write-Output "    Perhaps, try a differenct source file. Exiting..."
+    break   
 }
 
 # Build Resource Hacker Script 
@@ -147,7 +165,7 @@ start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
 if ($Sign) {
 
     # Copy signature from source and add to target
-    "[*] Extrating and adding signature ..."
+    "[*] Extracting and adding signature ..."
     $arg = "-i $source_binary_filepath -t $target_saveas -o $target_saveas_signed"
     $proc = start-process -FilePath $sigthiefBin -ArgumentList $arg -Wait -PassThru
     #$proc | Select * |Format-List
@@ -160,27 +178,26 @@ if ($Sign) {
 
 # Display Results
 Start-Sleep .5
-Write-Output ""
-Write-Output "[+]Results"
+Write-Output "`n[+] Results"
 Write-Output " -----------------------------------------------"
 
 
 if ($Sign) {
 
     Write-Output "[+] Metadata"
-    gi $target_saveas_signed | select VersionInfo | fl
+    Get-Item $target_saveas_signed | Select VersionInfo | Format-List
 
     Write-Output "[+] Digital Signature"
     Get-AuthenticodeSignature (gi $target_saveas_signed) | select SignatureType,SignerCertificate,Status | fl
+    Invoke-TimeStomp $source_binary_filepath $target_saveas_signed
 } 
 
 else {
     Write-Output "[+] Metadata"
-    gi $target_saveas | select VersionInfo | fl
-
+    Get-Item $target_saveas | Select VersionInfo | Format-List
     Write-Output "[+] Digital Signature"
     Write-Output "    Signature not added ... "
-
+    Invoke-TimeStomp $source_binary_filepath $target_saveas
 }
 
 }

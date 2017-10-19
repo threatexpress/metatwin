@@ -15,9 +15,13 @@ Author: @joevest
 ```
 
 The project is designed as a file resource cloner.  Metadata, including digital signature, is extracted from one file and injected into another.
-Note: The signature is added, but not valid.  
+Note: Signatures are copied, but no longer valid.  
 
-This project is based on a technique I've used for a few years.  This has been updated and modified to include copying digital signatures (thanks @subtee)
+This project is based on a technique I've used for a few years.  This has been updated and modified to include copying digital signatures.
+
+Thanks @subtee for the tweet that encouraged this project to be updated and published !!
+
+A blog post on this topic can be found at [threatexpress.com](http://threatexpress.com/2017/10/metatwin-borrowing-microsoft-metadata-and-digital-signatures-to-hide-binaries/)
 
 ## Resources
 
@@ -30,18 +34,22 @@ Note: SigThief and Resource Hacker may not detect valid metadata or digital sign
 ## Install
  
  - Clone this project
- - Download and unzip Resource Hacker to .\src\resource_hacker\ResourceHacker.exe (http://www.angusj.com/resourcehacker/resource_hacker.zip)
+ - Download and unzip [Resource Hacker](http://www.angusj.com/resourcehacker/resource_hacker.zip) to .\src\resource_hacker\ResourceHacker.exe
  - Enjoy...
 
 ## Description
 
-A version of this project has existed for several years to help a binary blend into a target environment by modifying it's metadata.  A binary's metadata can be replaced with the metadata of a source.  This includes values such as Product Name, Product Version, File Version, Copyright, etc.  In addition to standard metadata, sigthief is used to add the digital signature.  
+A version of this project has existed for several years to help a binary blend into a target environment by modifying it's metadata.  A binary's metadata can be replaced with the metadata of a source.  This includes values such as Product Name, Product Version, File Version, Copyright, etc.  In addition to standard metadata, sigthief is now used to copy a digital signature.  
 
 ## Usage
 
 ```
 SYNOPSIS
+<<<<<<< HEAD
     Invoke-MetaTwin copies metadata from one file ane inject into another.
+=======
+    MetaTwin copies metadata and AuthentiCode signature from one file and injects into another.
+>>>>>>> development
 
 SYNTAX
     Invoke-MetaTwin [-Source] <Object> [-Target] <Object> [-Sign] 
@@ -58,6 +66,8 @@ SYNTAX
 
 ```
 c:> powershell -ep bypass
-PS> Import-Module .\metatwin.ps1
+PS> Import-Module c:\tools\metatwin.ps1
+PS> cd c:\tools\metatwin\
 PS> Invoke-MetaTwin -Source c:\windows\system32\netcfgx.dll -Target .\beacon.exe -Sign
 ```
+
