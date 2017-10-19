@@ -80,6 +80,15 @@ Author: @joevest
 
 Set-StrictMode -Version 2
 
+# Basic file timestomping, maybe redundant since it will also need to be performed on target
+Function Invoke-TimeStomp ($source, $dest) {
+    $source_attributes = Get-Item $source
+    $dest_attributes = Get-Item $dest 
+    $dest_attributes.CreationTime = $source_attributes.CreationTime
+    $dest_attributes.LastAccessTime = $source_attributes.LastAccessTime
+    $dest_attributes.LastWriteTime = $source_attributes.LastWriteTime
+}
+
 # Binaries
 $resourceHackerBin = ".\src\resource_hacker\ResourceHacker.exe"
 $resourceHacker_base_script = ".\src\rh_base_script.txt"
@@ -175,19 +184,19 @@ Write-Output " -----------------------------------------------"
 if ($Sign) {
 
     Write-Output "[+] Metadata"
-    gi $target_saveas_signed | select VersionInfo | fl
+    Get-Item $target_saveas_signed | Select VersionInfo | Format-List
 
     Write-Output "[+] Digital Signature"
     Get-AuthenticodeSignature (gi $target_saveas_signed) | select SignatureType,SignerCertificate,Status | fl
+    Invoke-TimeStomp $source_binary_filepath $target_saveas_signed
 } 
 
 else {
     Write-Output "[+] Metadata"
-    gi $target_saveas | select VersionInfo | fl
-
+    Get-Item $target_saveas | Select VersionInfo | Format-List
     Write-Output "[+] Digital Signature"
     Write-Output "    Signature not added ... "
-
+    Invoke-TimeStomp $source_binary_filepath $target_saveas
 }
 
 }
