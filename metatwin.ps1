@@ -111,15 +111,16 @@ If ((Test-Path $sigthiefBin) -ne $True)
     }
 
 $timestamp = Get-Date -f yyyyMMdd_HHmmss
+$working_directory = (Get-Location).Path
 $log_file_base = (".\" + $timestamp + "\" + $timestamp)
 $source_binary_filename = Split-Path $Source -Leaf -Resolve
-$source_binary_filepath = $Source
+$source_binary_filepath = (Resolve-Path $Source).Path
 $target_binary_filename = Split-Path $Target -Leaf -Resolve
-$target_binary_filepath = $Target
-$source_resource = (".\" + $timestamp + "\" + $timestamp + "_" + $source_binary_filename + ".res")
-$target_saveas = (".\" + $timestamp + "\" + $timestamp + "_" + $target_binary_filename)
-$target_saveas_signed = (".\" + $timestamp + "\" + $timestamp + "_signed_" + $target_binary_filename)
-$resourcehacker_script = (".\" + $timestamp + "\" + $timestamp + "_rh_script.txt")
+$target_binary_filepath = (Resolve-Path $Target).Path
+$source_resource = ($working_directory + "\" + $timestamp + "\" + $timestamp + "_" + $source_binary_filename + ".res")
+$target_saveas = ($working_directory + "\" + $timestamp + "\" + $timestamp + "_" + $target_binary_filename)
+$target_saveas_signed = ($working_directory + "\" + $timestamp + "\" + $timestamp + "_signed_" + $target_binary_filename)
+$resourcehacker_script = ($working_directory + "\" + $timestamp + "\" + $timestamp + "_rh_script.txt")
 
 New-Item ".\$timestamp" -type directory | out-null
 Write-Output $logo
@@ -139,7 +140,7 @@ Stop-Process -Name ResourceHacker -ea "SilentlyContinue"
 $log_file = ($log_file_base + "_extract.log")
 
 $arg = "-open $source_binary_filepath -action extract -mask ,,, -save $source_resource -log $log_file"
-start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
+start-process -WorkingDirectory $working_directory -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
 
 # Check if extract was successful
 if (Select-String -Encoding Unicode -path $log_file -pattern "Failed") {
@@ -150,7 +151,7 @@ if (Select-String -Encoding Unicode -path $log_file -pattern "Failed") {
 
 # Build Resource Hacker Script 
 $log_file = ($log_file_base + "_add.log")
-(Get-Content $resourcehacker_base_script) -replace('AAA', $target) | Set-Content $resourcehacker_script
+(Get-Content $resourcehacker_base_script) -replace('AAA', $target_binary_filepath) | Set-Content $resourcehacker_script
 (Get-Content $resourcehacker_script) -replace('BBB', $target_saveas) | Set-Content $resourcehacker_script
 (Get-Content $resourcehacker_script) -replace('CCC', $log_file) | Set-Content $resourcehacker_script
 (Get-Content $resourcehacker_script) -replace('DDD', $source_resource) | Set-Content $resourcehacker_script
@@ -159,7 +160,7 @@ $log_file = ($log_file_base + "_add.log")
 "[*] Copying resources from $source_binary_filename to $target_saveas"
 
 $arg = "-script $resourcehacker_script"
-start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
+start-process -WorkingDirectory $working_directory -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
 
 # Add Digital Signature using SigThief
 if ($Sign) {
