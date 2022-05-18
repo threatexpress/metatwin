@@ -92,7 +92,6 @@ Function Invoke-TimeStomp ($source, $dest) {
 
 # Binaries
 $resourceHackerBin = ".\src\resource_hacker\ResourceHacker.exe"
-$resourceHacker_base_script = ".\src\rh_base_script.txt"
 $sigthiefBin       = ".\src\SigThief-master\dist\sigthief.exe"
 
 # Perform some quick dependency checking
@@ -119,7 +118,6 @@ $target_binary_filepath = $Target
 $source_resource = (".\" + $timestamp + "\" + $timestamp + "_" + $source_binary_filename + ".res")
 $target_saveas = (".\" + $timestamp + "\" + $timestamp + "_" + $target_binary_filename)
 $target_saveas_signed = (".\" + $timestamp + "\" + $timestamp + "_signed_" + $target_binary_filename)
-$resourcehacker_script = (".\" + $timestamp + "\" + $timestamp + "_rh_script.txt")
 
 New-Item ".\$timestamp" -type directory | out-null
 Write-Output $logo
@@ -148,17 +146,10 @@ if (Select-String -Encoding Unicode -path $log_file -pattern "Failed") {
     break   
 }
 
-# Build Resource Hacker Script 
-$log_file = ($log_file_base + "_add.log")
-(Get-Content $resourcehacker_base_script) -replace('AAA', $target) | Set-Content $resourcehacker_script
-(Get-Content $resourcehacker_script) -replace('BBB', $target_saveas) | Set-Content $resourcehacker_script
-(Get-Content $resourcehacker_script) -replace('CCC', $log_file) | Set-Content $resourcehacker_script
-(Get-Content $resourcehacker_script) -replace('DDD', $source_resource) | Set-Content $resourcehacker_script
-
 # Copy resources using Resource Hacker
 "[*] Copying resources from $source_binary_filename to $target_saveas"
 
-$arg = "-script $resourcehacker_script"
+$arg = "-open $target_binary_filepath -save $target_saveas -resource $source_resource -action addoverwrite"
 start-process -FilePath $resourceHackerBin -ArgumentList $arg -NoNewWindow -Wait
 
 # Add Digital Signature using SigThief

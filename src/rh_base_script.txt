@@ -1,6 +1,0 @@
-[FILENAMES]
-Exe=    AAA
-SaveAs= BBB
-Log=    CCC
-[COMMANDS]
--addoverwrite DDD ,,,
