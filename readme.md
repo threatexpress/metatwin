@@ -45,11 +45,7 @@ A version of this project has existed for several years to help a binary blend i
 
 ```
 SYNOPSIS
-<<<<<<< HEAD
-    Invoke-MetaTwin copies metadata from one file ane inject into another.
-=======
     MetaTwin copies metadata and AuthentiCode signature from one file and injects into another.
->>>>>>> development
 
 SYNTAX
     Invoke-MetaTwin [-Source] <Object> [-Target] <Object> [-Sign] 
